@@ -1,8 +1,9 @@
 package config
 
 import (
-	"context"
+	"os"
 	"log"
+	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -18,7 +19,7 @@ func NewMongoDBConfig() *MongoDBConfig {
 }
 
 func (mongoDBConfig MongoDBConfig) NewMongoDBClient() (*mongo.Client) {
-	clientOptions := options.Client().ApplyURI("mongodb://mongoadmin:secret@localhost:27117")
+	clientOptions := options.Client().ApplyURI(getMongoURIConnectionString())
 	client, err := mongo.Connect(mongoDBConfig.ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
@@ -34,4 +35,13 @@ func (mongoDBConfig MongoDBConfig) NewMongoDBClient() (*mongo.Client) {
 
 func (mongoDBConfig MongoDBConfig) Context() (context.Context) {
 	return mongoDBConfig.ctx
+}
+
+func getMongoURIConnectionString() string {
+	value, hasValue := os.LookupEnv("MONGODB_STRING_CONNECTION")
+	if !hasValue {
+		return "mongodb://mongoadmin:secret@localhost:27117"
+	} else {
+		return value
+	}
 }

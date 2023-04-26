@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  database:
+    container_name: mongodb-golang-netflix-hexagonal-arch
+    image: 'mongo:latest'
+    ports:
+      - '27117:27017'
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+    networks:
+      - my-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+  job:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: zevolution/job-golang-netflix-hexagonal-arch
+    container_name: job-golang-netflix-hexagonal-arch
+    depends_on:
+      database:
+        condition: service_healthy
+    links:
+      - database
+    environment:
+      MONGODB_STRING_CONNECTION: "mongodb://mongoadmin:secret@database:27017"
+    networks:
+      - my-network
+networks:
+  my-network:
+    driver: bridge
